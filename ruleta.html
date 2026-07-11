@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta · Sorteo aleatorio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink-900:#c8447a;
+    --pink-700:#e35b90;
+    --pink-500:#f0839f;
+    --pink-300:#f6abbf;
+    --pink-200:#facdd8;
+    --pink-100:#fde3e9;
+    --pink-050:#fdf1f4;
+    --cream:#fffaf9;
+    --ink:#5a3242;
+    --ink-soft:#a06f80;
+    --shadow: 0 20px 50px -20px rgba(200,68,122,0.35);
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%, var(--pink-100), transparent 45%),
+      radial-gradient(circle at 85% 90%, var(--pink-100), transparent 40%),
+      var(--cream);
+    font-family:'Quicksand', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+  }
+
+  .app{
+    width:100%;
+    max-width:1040px;
+    display:grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap:56px;
+    align-items:center;
+  }
+
+  @media (max-width: 860px){
+    .app{grid-template-columns:1fr; gap:36px;}
+  }
+
+  .intro{ text-align:left; }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--pink-700);
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--pink-500);
+    display:inline-block;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(38px, 5vw, 56px);
+    line-height:1.05;
+    margin:0 0 14px;
+    color:var(--pink-900);
+  }
+
+  .subtitle{
+    font-size:16px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    max-width:38ch;
+    margin:0 0 32px;
+  }
+
+  .panel{
+    background:#fff;
+    border-radius:22px;
+    padding:22px;
+    box-shadow: var(--shadow);
+    border:1px solid var(--pink-100);
+  }
+
+  .panel-title{
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--pink-700);
+    margin:0 0 12px;
+  }
+
+  .name-form{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  input[type=text]{
+    flex:1;
+    border:2px solid var(--pink-100);
+    border-radius:14px;
+    padding:12px 14px;
+    font-family:'Quicksand', sans-serif;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+    background:var(--pink-050);
+  }
+  input[type=text]:focus{ border-color:var(--pink-500); }
+  input[type=text]::placeholder{ color:var(--ink-soft); font-weight:500;}
+
+  .add-btn{
+    border:none;
+    background:var(--pink-700);
+    color:#fff;
+    width:46px;
+    border-radius:14px;
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .add-btn:hover{ background:var(--pink-900); transform:translateY(-1px); }
+  .add-btn:active{ transform:translateY(0); }
+
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    min-height:38px;
+  }
+
+  .chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--chip-color, var(--pink-100));
+    color:var(--ink);
+    padding:7px 8px 7px 14px;
+    border-radius:999px;
+    font-size:14px;
+    font-weight:600;
+  }
+  .chip button{
+    border:none;
+    background:rgba(255,255,255,.55);
+    color:var(--ink);
+    width:20px; height:20px;
+    border-radius:50%;
+    font-size:12px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    line-height:1;
+  }
+  .chip button:hover{ background:#fff; }
+
+  .empty-hint{
+    font-size:14px;
+    color:var(--ink-soft);
+    padding:8px 2px;
+  }
+
+  .stage{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:26px;
+  }
+
+  .wheel-wrap{
+    position:relative;
+    width:min(360px, 78vw);
+    aspect-ratio:1/1;
+  }
+
+  .pointer{
+    position:absolute;
+    top:-6px;
+    left:50%;
+    transform:translateX(-50%);
+    width:34px;
+    height:40px;
+    z-index:5;
+    filter:drop-shadow(0 6px 8px rgba(200,68,122,.35));
+  }
+
+  canvas{
+    width:100%;
+    height:100%;
+    display:block;
+    border-radius:50%;
+    box-shadow: var(--shadow);
+    transition: transform 4.2s cubic-bezier(.15,.85,.15,1);
+  }
+
+  .hub{
+    position:absolute;
+    top:50%; left:50%;
+    width:20%; height:20%;
+    background:#fff;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 4px 10px rgba(200,68,122,.25), inset 0 0 0 3px var(--pink-100);
+    z-index:4;
+  }
+
+  .spin-btn{
+    border:none;
+    background:linear-gradient(135deg, var(--pink-700), var(--pink-900));
+    color:#fff;
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:.03em;
+    padding:15px 42px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 14px 28px -12px rgba(200,68,122,.6);
+    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .spin-btn:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 18px 30px -12px rgba(200,68,122,.7); }
+  .spin-btn:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; }
+
+  .count-hint{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  /* Winner overlay */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(90,50,66,.35);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+    padding:20px;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+
+  .winner-card{
+    background:#fff;
+    border-radius:26px;
+    padding:44px 40px;
+    text-align:center;
+    max-width:380px;
+    width:100%;
+    box-shadow:0 30px 70px -20px rgba(90,50,66,.5);
+    transform:scale(.9);
+    transition:transform .3s cubic-bezier(.2,.8,.3,1.2);
+  }
+  .overlay.show .winner-card{ transform:scale(1); }
+
+  .winner-eyebrow{
+    font-size:13px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--pink-700);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .winner-name{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:clamp(30px, 6vw, 40px);
+    color:var(--pink-900);
+    margin:0 0 26px;
+    word-break:break-word;
+  }
+
+  .winner-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+  .ghost-btn{
+    border:2px solid var(--pink-200);
+    background:#fff;
+    color:var(--pink-900);
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:11px 20px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .ghost-btn:hover{ background:var(--pink-050); }
+
+  .solid-btn{
+    border:none;
+    background:var(--pink-700);
+    color:#fff;
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:11px 20px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .solid-btn:hover{ background:var(--pink-900); }
+
+  .petal{
+    position:fixed;
+    top:-20px;
+    border-radius:60% 0;
+    pointer-events:none;
+    z-index:49;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(105vh) rotate(360deg); opacity:.2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="intro">
+    <span class="eyebrow">Sorteo en vivo</span>
+    <h1>Escribe los nombres,<br>gira la ruleta.</h1>
+    <p class="subtitle">Agrega tantos nombres o números como quieras, presiona girar y descubre quién gana. Sin cuentas, sin complicaciones.</p>
+
+    <div class="panel">
+      <p class="panel-title">Participantes</p>
+      <form class="name-form" id="nameForm">
+        <input type="text" id="nameInput" placeholder="Escribe un nombre o número…" autocomplete="off">
+        <button type="submit" class="add-btn" aria-label="Añadir">+</button>
+      </form>
+      <div class="chips" id="chips">
+        <span class="empty-hint">Aún no hay participantes. Agrega al menos 2 para girar.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="wheel-wrap">
+      <svg class="pointer" viewBox="0 0 34 40" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 40 L2 12 A17 17 0 1 1 32 12 Z" fill="#e35b90"/>
+        <circle cx="17" cy="14" r="5" fill="#fff"/>
+      </svg>
+      <canvas id="wheel" width="600" height="600"></canvas>
+      <div class="hub"></div>
+    </div>
+    <button class="spin-btn" id="spinBtn" disabled>Girar</button>
+    <span class="count-hint" id="countHint">Agrega participantes para comenzar</span>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="winner-card">
+    <p class="winner-eyebrow">Y el ganador es…</p>
+    <p class="winner-name" id="winnerName">—</p>
+    <div class="winner-actions">
+      <button class="ghost-btn" id="removeWinnerBtn">Quitar de la lista</button>
+      <button class="solid-btn" id="closeOverlayBtn">Girar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const palette = ['#e35b90','#f0839f','#f6abbf','#facdd8','#fde3e9','#c8447a'];
+
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const chipsEl = document.getElementById('chips');
+  const spinBtn = document.getElementById('spinBtn');
+  const countHint = document.getElementById('countHint');
+  const form = document.getElementById('nameForm');
+  const input = document.getElementById('nameInput');
+  const overlay = document.getElementById('overlay');
+  const winnerNameEl = document.getElementById('winnerName');
+  const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+  const removeWinnerBtn = document.getElementById('removeWinnerBtn');
+
+  let names = [];
+  let rotation = 0;
+  let spinning = false;
+  let lastWinnerIndex = null;
+
+  function loadFromHash(){
+    const h = decodeURIComponent(location.hash.replace('#',''));
+    if(h){
+      names = h.split('|').map(s=>s.trim()).filter(Boolean);
+    }
+  }
+  function saveToHash(){
+    history.replaceState(null, '', '#' + encodeURIComponent(names.join('|')));
+  }
+
+  function renderChips(){
+    if(names.length === 0){
+      chipsEl.innerHTML = '<span class="empty-hint">Aún no hay participantes. Agrega al menos 2 para girar.</span>';
+      return;
+    }
+    chipsEl.innerHTML = names.map((n,i)=>{
+      const color = palette[i % palette.length];
+      return `<span class="chip" style="--chip-color:${color}">${escapeHtml(n)}<button data-i="${i}" aria-label="Quitar">×</button></span>`;
+    }).join('');
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function updateHint(){
+    if(names.length === 0){
+      countHint.textContent = 'Agrega participantes para comenzar';
+    } else if(names.length === 1){
+      countHint.textContent = 'Agrega al menos un participante más';
+    } else {
+      countHint.textContent = names.length + ' participantes listos';
+    }
+    spinBtn.disabled = names.length < 2 || spinning;
+  }
+
+  function drawWheel(){
+    const size = canvas.width;
+    const cx = size/2, cy = size/2, r = size/2 - 6;
+    ctx.clearRect(0,0,size,size);
+
+    if(names.length === 0){
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = '#fde3e9';
+      ctx.fill();
+      return;
+    }
+
+    const n = names.length;
+    const arc = (Math.PI*2)/n;
+
+    names.forEach((name,i)=>{
+      const start = i*arc - Math.PI/2;
+      const end = start + arc;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,start,end);
+      ctx.closePath();
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(start + arc/2);
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const dark = ['#facdd8','#fde3e9','#f6abbf'].includes(palette[i % palette.length]);
+      ctx.fillStyle = dark ? '#7a3d54' : '#ffffff';
+      ctx.font = '600 22px Quicksand, sans-serif';
+      let label = name;
+      const maxLen = 16;
+      if(label.length > maxLen) label = label.slice(0,maxLen-1) + '…';
+      ctx.fillText(label, r - 24, 0);
+      ctx.restore();
+    });
+  }
+
+  function addName(raw){
+    const val = raw.trim();
+    if(!val) return;
+    names.push(val);
+    saveToHash();
+    renderChips();
+    drawWheel();
+    updateHint();
+  }
+
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    addName(input.value);
+    input.value='';
+    input.focus();
+  });
+
+  chipsEl.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-i]');
+    if(!btn) return;
+    const i = parseInt(btn.dataset.i,10);
+    names.splice(i,1);
+    saveToHash();
+    renderChips();
+    drawWheel();
+    updateHint();
+  });
+
+  function spin(){
+    if(spinning || names.length < 2) return;
+    spinning = true;
+    updateHint();
+
+    const n = names.length;
+    const arc = 360/n;
+    const winnerIndex = Math.floor(Math.random()*n);
+    const targetSliceCenter = winnerIndex*arc + arc/2;
+    const extraSpins = 5 + Math.floor(Math.random()*3);
+    const finalRotation = rotation - (rotation % 360) + extraSpins*360 + (360 - targetSliceCenter);
+
+    rotation = finalRotation;
+    canvas.style.transform = `rotate(${rotation}deg)`;
+
+    setTimeout(()=>{
+      spinning = false;
+      lastWinnerIndex = winnerIndex;
+      showWinner(names[winnerIndex]);
+      updateHint();
+    }, 4300);
+  }
+
+  function showWinner(name){
+    winnerNameEl.textContent = name;
+    overlay.classList.add('show');
+    launchConfetti();
+  }
+
+  function launchConfetti(){
+    const colors = palette;
+    for(let i=0;i<28;i++){
+      const p = document.createElement('div');
+      p.className = 'petal';
+      const size = 8 + Math.random()*8;
+      p.style.width = size+'px';
+      p.style.height = size+'px';
+      p.style.left = Math.random()*100+'vw';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration = (2.2 + Math.random()*1.4)+'s';
+      p.style.opacity = 0.85;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), 4000);
+    }
+  }
+
+  closeOverlayBtn.addEventListener('click', ()=>{
+    overlay.classList.remove('show');
+  });
+
+  removeWinnerBtn.addEventListener('click', ()=>{
+    if(lastWinnerIndex !== null){
+      names.splice(lastWinnerIndex,1);
+      lastWinnerIndex = null;
+      saveToHash();
+      renderChips();
+      drawWheel();
+      updateHint();
+    }
+    overlay.classList.remove('show');
+  });
+
+  spinBtn.addEventListener('click', spin);
+
+  loadFromHash();
+  renderChips();
+  drawWheel();
+  updateHint();
+})();
+</script>
+
+</body>
+</html>
