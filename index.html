@@ -323,6 +323,26 @@
   }
   .solid-btn:hover{ background:var(--pink-900); }
 
+  .flower{
+    position:fixed;
+    pointer-events:none;
+    z-index:0;
+    mix-blend-mode:multiply;
+    user-select:none;
+  }
+  .flower-top-right{
+    top:-40px;
+    right:-30px;
+    width:min(260px, 34vw);
+  }
+  .flower-bottom-left{
+    bottom:-30px;
+    left:-30px;
+    width:min(230px, 30vw);
+  }
+
+  .app{ position:relative; z-index:1; }
+
   .petal{
     position:fixed;
     top:-20px;
@@ -338,6 +358,9 @@
 </head>
 <body>
 
+<img class="flower flower-top-right" src="arriba_derecha.jpg" alt="" aria-hidden="true">
+<img class="flower flower-bottom-left" src="abajo_izquierda.jpg" alt="" aria-hidden="true">
+
 <div class="app">
 
   <div class="intro">
@@ -346,14 +369,8 @@
     <p class="subtitle">Agrega tantos nombres o números como quieras, presiona girar y descubre quién gana.</p>
 
     <div class="panel">
-      <p class="panel-title">Participantes</p>
-      <form class="name-form" id="nameForm">
-        <input type="text" id="nameInput" placeholder="Escribe un nombre o número…" autocomplete="off">
-        <button type="submit" class="add-btn" aria-label="Añadir">+</button>
-      </form>
-      <div class="chips" id="chips">
-        <span class="empty-hint">Aún no hay participantes. Agrega al menos 2 para girar.</span>
-      </div>
+      <p class="panel-title">Opciones</p>
+      <div class="chips" id="chips"></div>
     </div>
   </div>
 
@@ -374,10 +391,9 @@
 
 <div class="overlay" id="overlay">
   <div class="winner-card">
-    <p class="winner-eyebrow">Y el ganador es…</p>
+    <p class="winner-eyebrow">El evento será</p>
     <p class="winner-name" id="winnerName">—</p>
     <div class="winner-actions">
-      <button class="ghost-btn" id="removeWinnerBtn">Quitar de la lista</button>
       <button class="solid-btn" id="closeOverlayBtn">Girar de nuevo</button>
     </div>
   </div>
@@ -392,31 +408,13 @@
   const chipsEl = document.getElementById('chips');
   const spinBtn = document.getElementById('spinBtn');
   const countHint = document.getElementById('countHint');
-  const form = document.getElementById('nameForm');
-  const input = document.getElementById('nameInput');
   const overlay = document.getElementById('overlay');
   const winnerNameEl = document.getElementById('winnerName');
   const closeOverlayBtn = document.getElementById('closeOverlayBtn');
-  const removeWinnerBtn = document.getElementById('removeWinnerBtn');
 
-  let names = [];
+  const names = ['Premio', 'Reto', 'Pregunta'];
   let rotation = 0;
   let spinning = false;
-  let lastWinnerIndex = null;
-
-  const defaultNames = ['Premio', 'Reto', 'Pregunta'];
-
-  function loadFromHash(){
-    const h = decodeURIComponent(location.hash.replace('#',''));
-    if(h){
-      names = h.split('|').map(s=>s.trim()).filter(Boolean);
-    } else {
-      names = [...defaultNames];
-    }
-  }
-  function saveToHash(){
-    history.replaceState(null, '', '#' + encodeURIComponent(names.join('|')));
-  }
 
   function renderChips(){
     if(names.length === 0){
@@ -425,7 +423,7 @@
     }
     chipsEl.innerHTML = names.map((n,i)=>{
       const color = palette[i % palette.length];
-      return `<span class="chip" style="--chip-color:${color}">${escapeHtml(n)}<button data-i="${i}" aria-label="Quitar">×</button></span>`;
+      return `<span class="chip" style="--chip-color:${color}">${escapeHtml(n)}</span>`;
     }).join('');
   }
 
@@ -434,14 +432,8 @@
   }
 
   function updateHint(){
-    if(names.length === 0){
-      countHint.textContent = 'Agrega participantes para comenzar';
-    } else if(names.length === 1){
-      countHint.textContent = 'Agrega al menos un participante más';
-    } else {
-      countHint.textContent = names.length + ' participantes listos';
-    }
-    spinBtn.disabled = names.length < 2 || spinning;
+    countHint.textContent = spinning ? 'Girando…' : 'Listo para girar';
+    spinBtn.disabled = spinning;
   }
 
   function drawWheel(){
@@ -489,34 +481,6 @@
     });
   }
 
-  function addName(raw){
-    const val = raw.trim();
-    if(!val) return;
-    names.push(val);
-    saveToHash();
-    renderChips();
-    drawWheel();
-    updateHint();
-  }
-
-  form.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    addName(input.value);
-    input.value='';
-    input.focus();
-  });
-
-  chipsEl.addEventListener('click', (e)=>{
-    const btn = e.target.closest('button[data-i]');
-    if(!btn) return;
-    const i = parseInt(btn.dataset.i,10);
-    names.splice(i,1);
-    saveToHash();
-    renderChips();
-    drawWheel();
-    updateHint();
-  });
-
   function spin(){
     if(spinning || names.length < 2) return;
     spinning = true;
@@ -534,7 +498,6 @@
 
     setTimeout(()=>{
       spinning = false;
-      lastWinnerIndex = winnerIndex;
       showWinner(names[winnerIndex]);
       updateHint();
     }, 4300);
@@ -567,21 +530,8 @@
     overlay.classList.remove('show');
   });
 
-  removeWinnerBtn.addEventListener('click', ()=>{
-    if(lastWinnerIndex !== null){
-      names.splice(lastWinnerIndex,1);
-      lastWinnerIndex = null;
-      saveToHash();
-      renderChips();
-      drawWheel();
-      updateHint();
-    }
-    overlay.classList.remove('show');
-  });
-
   spinBtn.addEventListener('click', spin);
 
-  loadFromHash();
   renderChips();
   drawWheel();
   updateHint();
