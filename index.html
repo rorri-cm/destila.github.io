@@ -343,7 +343,7 @@
   <div class="intro">
     <span class="eyebrow">Sorteo en vivo</span>
     <h1>Escribe los nombres,<br>gira la ruleta.</h1>
-    <p class="subtitle">Agrega tantos nombres o números como quieras, presiona girar y descubre quién gana. Sin cuentas, sin complicaciones.</p>
+    <p class="subtitle">Agrega tantos nombres o números como quieras, presiona girar y descubre quién gana.</p>
 
     <div class="panel">
       <p class="panel-title">Participantes</p>
@@ -404,10 +404,14 @@
   let spinning = false;
   let lastWinnerIndex = null;
 
+  const defaultNames = ['Premio', 'Reto', 'Pregunta'];
+
   function loadFromHash(){
     const h = decodeURIComponent(location.hash.replace('#',''));
     if(h){
       names = h.split('|').map(s=>s.trim()).filter(Boolean);
+    } else {
+      names = [...defaultNames];
     }
   }
   function saveToHash(){
